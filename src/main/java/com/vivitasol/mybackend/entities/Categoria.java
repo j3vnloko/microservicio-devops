@@ -1,5 +1,5 @@
 package com.vivitasol.mybackend.entities;
-
+// Validación de campos obligatorios en entidad Categoria
 import java.util.List;
 
 import jakarta.persistence.Entity;
