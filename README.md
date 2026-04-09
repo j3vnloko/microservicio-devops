@@ -81,3 +81,6 @@ validadas por el equipo.
 
 ## Integrante 
 Jean Carlos Andrés Flores Cifuentes
+
+## Conclusión final personal
+Mi conclusión final es que aprendí a manejar mejor las ramas, me familiaricé con el git push y  el git commit que se me había olvidado y aprendí mas sobre el git huh actions para poder automatizar cuando alguien suba un codigo y esté resulte dañado yo poder saberlo de forma automatizada
