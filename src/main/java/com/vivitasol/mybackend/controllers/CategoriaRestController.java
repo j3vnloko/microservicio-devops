@@ -1,4 +1,5 @@
 package com.vivitasol.mybackend.controllers;
+// Endpoint para gestión de categorías - feature agregada
 
 import java.util.List;
 
