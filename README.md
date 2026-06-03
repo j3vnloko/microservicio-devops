@@ -3,17 +3,58 @@
 ## Descripción
 Microservicio REST desarrollado en Spring Boot con Java 21, que gestiona 
 Categorías y Productos con conexión a base de datos MySQL. Este repositorio 
-forma parte del pipeline DevOps construido en la asignatura Ingeniería DevOps (DOY0101).
+implementa un pipeline CI/CD completo con GitHub Actions.
 
-## Estrategia de Ramificación
-Se utilizó **GitFlow** como estrategia de ramificación. Esta decisión se tomó 
-porque el proyecto tiene ciclos de desarrollo definidos, donde se requiere 
-mantener una rama estable de producción (main) separada del desarrollo continuo 
-(develop). GitFlow permite trabajar features de forma aislada, corregir errores 
-urgentes mediante hotfixes sin interrumpir el flujo de desarrollo, y mantener 
-una trazabilidad clara de todos los cambios realizados en el código.
+## Tecnologías
+- Java 21 + Spring Boot
+- MySQL 8.0
+- Docker + Docker Compose
+- GitHub Actions (CI/CD)
+- Snyk (análisis de seguridad)
+- Dependabot (actualización de dependencias)
+- JUnit 5 + Mockito (pruebas unitarias)
 
-## Estructura de Ramas
+## Pipeline CI/CD
+El pipeline se ejecuta automáticamente en cada push a `develop` y en cada 
+Pull Request hacia `main`. Tiene 3 etapas en cadena:
+
+### Etapa 1 - Build y Tests
+- Checkout del código
+- Configuración de Java 21
+- Compilación con Maven
+- Ejecución de pruebas unitarias con JUnit 5 y Mockito
+
+### Etapa 2 - Seguridad (depende de Etapa 1)
+- Escaneo de dependencias con Snyk
+- Si encuentra vulnerabilidades críticas, el pipeline se bloquea
+- Complementado con Dependabot para actualizaciones semanales automáticas
+
+### Etapa 3 - Deploy (depende de Etapa 2)
+- Construcción de imagen Docker con multi-stage build
+- Despliegue automático con Docker Compose
+
+## Trazabilidad
+Cada commit en `develop` dispara el pipeline completo. GitHub Actions registra 
+cada etapa con logs detallados, garantizando visibilidad total desde el 
+desarrollo hasta el despliegue.
+
+## Orquestación de Contenedores
+Docker Compose orquesta dos servicios:
+- `app`: el microservicio Spring Boot
+- `db`: base de datos MySQL 8.0 con healthcheck
+
+## Evidencia Docker Compose
+
+### Contenedores iniciando
+![Docker Compose inicio](evidencias%20parcial%202/1.jpg)
+
+### Conexión a MySQL exitosa
+![HikariPool conectado](evidencias%20parcial%202/2.jpg)
+
+### Aplicación corriendo
+![App iniciada](evidencias%20parcial%202/3.jpg)
+
+## Estrategia de Ramificación (GitFlow)
 | Rama | Descripción |
 |------|-------------|
 | `main` | Código estable en producción |
@@ -21,66 +62,16 @@ una trazabilidad clara de todos los cambios realizados en el código.
 | `feature/<nombre>` | Desarrollo de nuevas características |
 | `hotfix/<nombre>` | Correcciones urgentes sobre main |
 
-## Convenciones de Commits
-Se utiliza el estándar **Conventional Commits**:
-
-| Prefijo | Uso |
-|---------|-----|
-| `feat` | Nueva funcionalidad |
-| `fix` | Corrección de error |
-| `docs` | Cambios en documentación |
-| `ci` | Cambios en pipeline CI/CD |
-| `refactor` | Mejora de código sin cambio funcional |
-| `chore` | Tareas de mantenimiento |
-
-Ejemplos:
-- `feat: agrega endpoint para listar productos`
-- `fix: corrige parámetros de conexión a base de datos`
-- `ci: agrega workflow de GitHub Actions`
-
-## Flujo de Merge
-1. Crear rama desde `develop` (o desde `main` en caso de hotfix)
-2. Desarrollar el cambio y hacer commits con mensajes descriptivos
-3. Hacer push de la rama al repositorio remoto
-4. Abrir Pull Request hacia la rama destino
-5. Revisión del código por parte del compañero de equipo
-6. Merge tras aprobación
-
-## Naming de Ramas
-- Features: `feature/nombre-descriptivo-en-kebab-case`
-- Hotfixes: `hotfix/descripcion-corta-del-error`
-- Ejemplos:
-  - `feature/agregar-endpoint-producto`
-  - `feature/validacion-categoria`
-  - `hotfix/corregir-conexion-bd`
-
-## GitHub Actions - CI/CD
-Se configuró un pipeline de integración continua con **GitHub Actions** que 
-se ejecuta automáticamente en cada push a `develop` y en cada Pull Request 
-hacia `main`. El pipeline realiza los siguientes pasos:
-
-1. Checkout del código fuente
-2. Configuración del entorno Java 21
-3. Compilación del proyecto con Maven
-
-Esto garantiza que cada cambio integrado compile correctamente antes de llegar 
-a producción, cumpliendo con los estándares básicos de CI/CD.
-
-## Pull Requests realizados
-| PR | Tipo | Descripción | Rama origen | Rama destino |
-|----|------|-------------|-------------|--------------|
-| #1 | feature | Agrega endpoint para listar productos | feature/agregar-endpoint-producto | develop |
-| #2 | feature | Agrega validación en entidad Categoria | feature/validacion-categoria | develop |
-| #3 | hotfix | Corrige parámetros de conexión a base de datos | hotfix/corregir-conexion-bd | main |
-
 ## Herramientas de IA utilizadas
 - **Claude (Anthropic):** Apoyo en la estructura del README, configuración del 
-workflow de GitHub Actions y orientación general sobre buenas prácticas de GitFlow.
-Todo el código, decisiones técnicas y justificaciones fueron revisadas y 
-validadas por el equipo.
+pipeline CI/CD, Dockerfile y docker-compose. Todas las decisiones técnicas 
+fueron revisadas y validadas por el equipo.
 
-## Integrante 
+## Integrante
 Jean Carlos Andrés Flores Cifuentes
 
 ## Conclusión final personal
-Mi conclusión final es que aprendí a manejar mejor las ramas, me familiaricé con el git push y  el git commit que se me había olvidado y aprendí mas sobre el git huh actions para poder automatizar cuando alguien suba un codigo y esté resulte dañado yo poder saberlo de forma automatizada
+Mi conclusión final es que aprendí a manejar mejor las ramas, me familiaricé 
+con git push y git commit, y aprendí más sobre GitHub Actions para automatizar 
+la integración continua. Con esta evaluación además incorporé contenedores con 
+Docker, pruebas unitarias con JUnit y análisis de seguridad con Snyk.
