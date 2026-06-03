@@ -46,13 +46,14 @@ Docker Compose orquesta dos servicios:
 ## Evidencia Docker Compose
 
 ### Contenedores iniciando
-![Docker Compose inicio](evidencias%20parcial%202/1.jpg)
+![Docker Compose inicio](Downloads/microservicio-devops-main/evidencias%20parcial%202/1.jpg)
 
-### Conexión a MySQL exitosa
-![HikariPool conectado](evidencias%20parcial%202/2.jpg)
+### Conexión a MySQL exitosa 
+![HikariPool conectado](Downloads/microservicio-devops-main/evidencias%20parcial%202/2.jpg)
+
 
 ### Aplicación corriendo
-![App iniciada](evidencias%20parcial%202/3.jpg)
+![App iniciada](Downloads/microservicio-devops-main/evidencias%20parcial%202/3.jpg)
 
 ## Estrategia de Ramificación (GitFlow)
 | Rama | Descripción |
