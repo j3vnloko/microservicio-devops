@@ -66,6 +66,11 @@ jobs:
       - name: Instalar Snyk CLI
         run: npm install -g snyk
 
+      - name: Autenticar Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: snyk auth $SNYK_TOKEN
+
       - name: Escaneo de seguridad con Snyk
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
