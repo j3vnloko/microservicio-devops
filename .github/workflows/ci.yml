@@ -63,6 +63,17 @@ jobs:
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.qualitygate.wait=false
 
+      - name: Verificar token Snyk
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          if [ -z "$SNYK_TOKEN" ]; then
+            echo "ERROR: SNYK_TOKEN está vacío"
+            exit 1
+          else
+            echo "SNYK_TOKEN tiene ${#SNYK_TOKEN} caracteres"
+          fi
+
       - name: Instalar Snyk CLI
         run: npm install -g snyk
 
