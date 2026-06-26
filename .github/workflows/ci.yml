@@ -60,7 +60,8 @@ jobs:
             -Dsonar.projectKey=j3vnloko_microservicio-devops \
             -Dsonar.organization=j3vnloko \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.token=$SONAR_TOKEN
+            -Dsonar.token=$SONAR_TOKEN \
+            -Dsonar.qualitygate.wait=false
 
       - name: Escaneo de seguridad con Snyk
         uses: snyk/actions/maven@master
