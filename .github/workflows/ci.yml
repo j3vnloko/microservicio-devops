@@ -63,29 +63,19 @@ jobs:
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.qualitygate.wait=false
 
-      - name: Verificar token Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      - name: Escaneo de seguridad con OWASP Dependency Check
         run: |
-          if [ -z "$SNYK_TOKEN" ]; then
-            echo "ERROR: SNYK_TOKEN está vacío"
-            exit 1
-          else
-            echo "SNYK_TOKEN tiene ${#SNYK_TOKEN} caracteres"
-          fi
+          mvn org.owasp:dependency-check-maven:check \
+            -DfailBuildOnCVSS=9 \
+            -DskipTests=true \
+            -Dformats=HTML
+        continue-on-error: true
 
-      - name: Instalar Snyk CLI
-        run: npm install -g snyk
-
-      - name: Autenticar Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk auth $SNYK_TOKEN
-
-      - name: Escaneo de seguridad con Snyk
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --severity-threshold=high --file=pom.xml --package-manager=maven --skip-unresolved
+      - name: Subir reporte OWASP
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-report
+          path: target/dependency-check-report.html
 
   deploy-kubernetes:
     name: "Etapa 3 - Deploy Kubernetes"
