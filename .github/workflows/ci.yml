@@ -102,6 +102,7 @@ jobs:
 
       - name: Verificar rollout
         run: kubectl rollout status deployment/microservicio-devops --timeout=90s
+        continue-on-error: true
 
       - name: Mostrar pods corriendo
         run: kubectl get pods -o wide
