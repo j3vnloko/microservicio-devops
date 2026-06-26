@@ -63,13 +63,13 @@ jobs:
             -Dsonar.token=$SONAR_TOKEN \
             -Dsonar.qualitygate.wait=false
 
+      - name: Instalar Snyk CLI
+        run: npm install -g snyk
+
       - name: Escaneo de seguridad con Snyk
-        uses: snyk/actions/maven@master
-        continue-on-error: false
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
+        run: snyk test --severity-threshold=high --all-projects
 
   deploy-kubernetes:
     name: "Etapa 3 - Deploy Kubernetes"
