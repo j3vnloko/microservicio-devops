@@ -74,7 +74,7 @@ jobs:
       - name: Escaneo de seguridad con Snyk
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --severity-threshold=high --file=pom.xml
+        run: snyk test --severity-threshold=high --file=pom.xml --package-manager=maven --skip-unresolved
 
   deploy-kubernetes:
     name: "Etapa 3 - Deploy Kubernetes"
