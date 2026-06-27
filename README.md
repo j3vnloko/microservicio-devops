@@ -43,7 +43,7 @@ Pipeline CI/CD — 3 Etapas en Cadena (IE6)
 
 El pipeline se activa automáticamente en cada push a develop y en Pull Requests hacia main. Las etapas corren en secuencia: si una falla, las siguientes no se ejecutan.
 
-Mostrar imagen
+![Pipeline verde con las 3 etapas completadas](docs/pipeline-verde.jpg)
 
 Etapa 1 — Build y Tests
 
@@ -138,9 +138,9 @@ El análisis de calidad se ejecuta automáticamente en cada push a develop.
 
 MétricaResultadoSecurity RatingAReliability RatingAMaintainability RatingA
 
-Mostrar imagen
+![SonarCloud - Security Rating A](docs/sonarcloud-security.jpg)
 
-Mostrar imagen
+![SonarCloud - Reliability Rating A](docs/sonarcloud-reliability.jpg)
 
 Branch Protection — protect-main
 
@@ -153,7 +153,7 @@ Bloquea force pushes
 Restringe eliminación de la rama
 
 
-Mostrar imagen
+![Branch Protection activa en main](docs/branch-protection.jpg)
 
 
 IE6 — Detención ante Fallas Críticas
