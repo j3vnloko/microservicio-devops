@@ -1,78 +1,224 @@
-# Microservicio DevOps - Backend Spring Boot
+# Microservicio DevOps — EP3: Observabilidad y Cumplimiento Normativo
 
-## Descripción
-Microservicio REST desarrollado en Spring Boot con Java 21, que gestiona 
-Categorías y Productos con conexión a base de datos MySQL. Este repositorio 
-implementa un pipeline CI/CD completo con GitHub Actions.
+Microservicio REST desarrollado en **Spring Boot con Java 21**, que gestiona Categorías y Productos con conexión a base de datos MySQL. Esta entrega extiende el pipeline CI/CD previo incorporando observabilidad, métricas, análisis de calidad y despliegue en Kubernetes.
 
-## Tecnologías
-- Java 21 + Spring Boot
+---
+
+## Tecnologías utilizadas
+
+- Java 21 + Spring Boot 3.5.6
 - MySQL 8.0
 - Docker + Docker Compose
-- GitHub Actions (CI/CD)
-- Snyk (análisis de seguridad)
-- Dependabot (actualización de dependencias)
+- GitHub Actions (CI/CD — 3 etapas en cadena)
+- Prometheus + Grafana (monitoreo y métricas)
+- SonarCloud (análisis de calidad de código)
+- Snyk (análisis de seguridad de dependencias)
+- Kubernetes con Kind (despliegue orquestado)
+- JaCoCo (cobertura de pruebas)
 - JUnit 5 + Mockito (pruebas unitarias)
 
-## Pipeline CI/CD
-El pipeline se ejecuta automáticamente en cada push a `develop` y en cada 
-Pull Request hacia `main`. Tiene 3 etapas en cadena:
+---
 
-### Etapa 1 - Build y Tests
+## Estructura del proyecto
+
+```
+microservicio-devops/
+├── .github/workflows/
+│   └── ci.yml                        ← Pipeline CI/CD EP3 (3 etapas)
+├── docs/                             ← Evidencias visuales
+├── k8s/
+│   └── deployment.yaml               ← Despliegue en Kubernetes
+├── monitoring/
+│   ├── prometheus.yml                ← Configuración de scraping
+│   └── grafana/
+│       └── provisioning/
+│           └── datasources/
+│               └── prometheus.yml    ← Fuente de datos Grafana
+├── src/
+├── docker-compose.yml                ← App + MySQL + Prometheus + Grafana
+├── sonar-project.properties          ← Configuración SonarCloud
+└── pom.xml                           ← Dependencias + JaCoCo + Sonar
+```
+
+---
+
+## Pipeline CI/CD — 3 Etapas en Cadena (IE6)
+
+El pipeline se activa automáticamente en cada `push` a `develop` y en Pull Requests hacia `main`. Las etapas corren en secuencia: si una falla, las siguientes no se ejecutan.
+
+![Pipeline verde con las 3 etapas completadas](docs/pipeline-verde.jpg)
+
+### Etapa 1 — Build y Tests
 - Checkout del código
-- Configuración de Java 21
-- Compilación con Maven
-- Ejecución de pruebas unitarias con JUnit 5 y Mockito
+- Configuración de Java 21 (Temurin)
+- Compilación y ejecución de pruebas con Maven
+- Generación de reporte de cobertura con JaCoCo
+- Subida del reporte como artefacto
 
-### Etapa 2 - Seguridad (depende de Etapa 1)
-- Escaneo de dependencias con Snyk
-- Si encuentra vulnerabilidades críticas, el pipeline se bloquea
-- Complementado con Dependabot para actualizaciones semanales automáticas
+### Etapa 2 — Seguridad y Calidad
+- Análisis de calidad con **SonarCloud**
+- Escaneo de dependencias con **Snyk** (`--severity-threshold=high`)
+- Si SonarCloud detecta una falla crítica de calidad, el pipeline se detiene (**IE6**)
 
-### Etapa 3 - Deploy (depende de Etapa 2)
-- Construcción de imagen Docker con multi-stage build
-- Despliegue automático con Docker Compose
+### Etapa 3 — Deploy Kubernetes
+- Creación de clúster local con **Kind**
+- Build de imagen Docker multi-stage
+- Carga de la imagen al clúster Kind
+- Despliegue con `kubectl apply`
+- Verificación del rollout y estado de pods
 
-## Trazabilidad
-Cada commit en `develop` dispara el pipeline completo. GitHub Actions registra 
-cada etapa con logs detallados, garantizando visibilidad total desde el 
-desarrollo hasta el despliegue.
+---
 
-## Orquestación de Contenedores
-Docker Compose orquesta dos servicios:
-- `app`: el microservicio Spring Boot
-- `db`: base de datos MySQL 8.0 con healthcheck
+## IE1 — Monitoreo con Prometheus
 
-## Evidencia Docker Compose
+Se agregó la dependencia `micrometer-registry-prometheus` al `pom.xml` y se habilitó el endpoint `/actuator/prometheus` en `application.properties`:
 
-### Contenedores iniciando
-![Docker Compose inicio](Downloads/microservicio-devops-main/evidencias%20parcial%202/1.jpg)
+```properties
+management.endpoints.web.exposure.include=health,info,prometheus,metrics
+management.endpoint.prometheus.enabled=true
+```
 
-### Conexión a MySQL exitosa 
-![HikariPool conectado](Downloads/microservicio-devops-main/evidencias%20parcial%202/2.jpg)
+Prometheus scrapea las métricas de la aplicación cada 15 segundos, configurado en `monitoring/prometheus.yml`:
 
+```yaml
+scrape_configs:
+  - job_name: 'microservicio-devops'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['app:8080']
+```
 
-### Aplicación corriendo
-![App iniciada](Downloads/microservicio-devops-main/evidencias%20parcial%202/3.jpg)
+Las métricas disponibles incluyen uso de CPU, memoria de la JVM, tiempos de respuesta HTTP, número de requests y disponibilidad del servicio.
+
+---
+
+## IE2 — Despliegue en Kubernetes (Kind)
+
+El microservicio se despliega en un clúster Kubernetes simulado con **Kind** dentro de GitHub Actions. El archivo `k8s/deployment.yaml` define:
+
+- **2 réplicas** del microservicio
+- **Health checks** con `/actuator/health` (readiness y liveness probes)
+- Anotaciones Prometheus para scraping automático de métricas
+- Servicio de tipo `ClusterIP`
+
+El despliegue se realiza de forma automatizada en cada ejecución del pipeline, garantizando trazabilidad completa desde el código hasta el entorno orquestado.
+
+---
+
+## IE3 — Dashboard con Grafana
+
+Grafana se levanta junto con Prometheus a través de `docker-compose up`. Acceso local en `http://localhost:3000` (usuario: `admin`, contraseña: `admin`).
+
+La fuente de datos Prometheus se configura automáticamente mediante provisioning en `monitoring/grafana/provisioning/datasources/prometheus.yml`.
+
+**Métricas clave disponibles en el dashboard:**
+- Uso de CPU y memoria de la JVM
+- Tiempo de respuesta de los endpoints HTTP
+- Número de requests por segundo
+- Estado de salud del microservicio (`UP` / `DOWN`)
+- Tasa de errores HTTP (4xx y 5xx)
+
+---
+
+## IE4 — Integración en el Pipeline CI/CD
+
+Cada herramienta cumple un rol específico dentro del ciclo de vida del software:
+
+| Herramienta | Etapa | Aporte a decisiones técnicas |
+|---|---|---|
+| JaCoCo | Etapa 1 | Mide cobertura de pruebas; permite detectar código sin testear |
+| SonarCloud | Etapa 2 | Identifica bugs, vulnerabilidades y deuda técnica antes del deploy |
+| Snyk | Etapa 2 | Detecta vulnerabilidades en dependencias de terceros |
+| Prometheus | Runtime | Expone métricas en tiempo real del microservicio en ejecución |
+| Grafana | Runtime | Visualiza tendencias de CPU, memoria y errores para toma de decisiones |
+| Kind + kubectl | Etapa 3 | Valida que la imagen Docker despliega correctamente en Kubernetes |
+
+---
+
+## IE5 — Políticas de Cumplimiento
+
+### SonarCloud
+
+El análisis de calidad se ejecuta automáticamente en cada push a `develop`.
+
+| Métrica | Resultado |
+|---|---|
+| Security Rating | **A** |
+| Reliability Rating | **A** |
+| Maintainability Rating | **A** |
+
+![SonarCloud - Security Rating A](docs/sonarcloud-security.jpg)
+
+![SonarCloud - Reliability Rating A](docs/sonarcloud-reliability.jpg)
+
+### Branch Protection — `protect-main`
+
+Se configuró un Ruleset activo sobre la rama `main` con las siguientes reglas:
+- Requiere Pull Request antes de hacer merge
+- Requiere que los 3 status checks pasen (Etapa 1, Etapa 2, Etapa 3)
+- Bloquea force pushes
+- Restringe eliminación de la rama
+
+![Branch Protection activa en main](docs/branch-protection.jpg)
+
+---
+
+## IE6 — Detención ante Fallas Críticas
+
+El pipeline implementa los siguientes mecanismos de detención automática:
+
+1. **SonarCloud**: si el Quality Gate falla, Maven retorna exit code 1 y detiene el pipeline antes del deploy.
+2. **Snyk con `--severity-threshold=high`**: si detecta una vulnerabilidad alta o crítica en dependencias, bloquea la Etapa 2.
+3. **Cadena `needs`**: cada etapa depende de la anterior, por lo que una falla en cualquier punto detiene todo el flujo.
+
+---
 
 ## Estrategia de Ramificación (GitFlow)
+
 | Rama | Descripción |
-|------|-------------|
-| `main` | Código estable en producción |
-| `develop` | Integración de nuevas funcionalidades |
+|---|---|
+| `main` | Código estable en producción (protegida por ruleset) |
+| `develop` | Integración de nuevas funcionalidades (activa el pipeline) |
 | `feature/<nombre>` | Desarrollo de nuevas características |
 | `hotfix/<nombre>` | Correcciones urgentes sobre main |
 
+---
+
+## Cómo ejecutar localmente
+
+```bash
+# Levantar la aplicación con monitoreo completo
+docker compose up -d
+
+# Accesos
+# App:        http://localhost:8080
+# Prometheus: http://localhost:9090
+# Grafana:    http://localhost:3000  (admin/admin)
+# Métricas:   http://localhost:8080/actuator/prometheus
+```
+
+---
+
 ## Herramientas de IA utilizadas
-- **Claude (Anthropic):** Apoyo en la estructura del README, configuración del 
-pipeline CI/CD, Dockerfile y docker-compose. Todas las decisiones técnicas 
-fueron revisadas y validadas por el equipo.
+
+Claude (Anthropic): Apoyo en la configuración del pipeline CI/CD, Dockerfile, archivos de Kubernetes, configuración de Prometheus/Grafana y estructura del README. Todas las decisiones técnicas fueron revisadas y validadas por el estudiante.
+
+Todo uso de IA fue citado según las indicaciones del curso: https://bibliotecas.duoc.cl/ia
+
+---
+
+## Conclusión personal
+
+Durante el desarrollo de esta evaluación, lo que más me costó fue depurar los errores del pipeline en GitHub Actions. Cada corrección traía un nuevo error distinto, lo que me obligó a leer los logs con detención y entender qué estaba fallando en cada etapa. Ese proceso, aunque frustrante, fue donde más aprendí.
+
+En cuanto a herramientas nuevas, SonarCloud me pareció muy útil porque permite ver la calidad del código de forma visual y objetiva, identificando vulnerabilidades o problemas que a simple vista no se notan. Entendí que integrar este tipo de análisis en el pipeline no es opcional en un entorno profesional real.
+
+Lo que más valoro de esta evaluación es haber comprendido para qué sirve realmente un pipeline que se detiene ante fallas: no es solo una configuración técnica, sino una forma de proteger el entorno productivo de código defectuoso o inseguro. En el mundo laboral, automatizar estos controles permite que los equipos trabajen con mayor confianza y velocidad.
+
+---
 
 ## Integrante
-Jean Carlos Andrés Flores Cifuentes
 
-## Conclusión final personal
-Mi conclusión final es que aprendí a manejar mejor las ramas, me familiaricé 
-con git push y git commit, y aprendí más sobre GitHub Actions para automatizar 
-la integración continua. Con esta evaluación además incorporé contenedores con 
-Docker, pruebas unitarias con JUnit y análisis de seguridad con Snyk.
+**Jean Carlos Andrés Flores Cifuentes**
+
+Repositorio: https://github.com/j3vnloko/microservicio-devops
